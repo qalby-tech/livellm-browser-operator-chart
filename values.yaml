@@ -2,7 +2,7 @@
 operator:
   image:
     repository: kamasalyamov/livellm-browser-operator
-    # -- Tag defaults to Chart.AppVersion if empty
+    # -- Tag defaults to Chart.Version if empty
     tag: ""
     pullPolicy: Always
   replicas: 1

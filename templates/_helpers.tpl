@@ -52,10 +52,10 @@ app.kubernetes.io/name: {{ include "livellm-operator.name" . }}
 {{- end }}
 
 {{/*
-Operator image tag — defaults to Chart.AppVersion.
+Operator image tag — defaults to Chart.Version (chart release), not AppVersion.
 */}}
 {{- define "livellm-operator.operatorTag" -}}
-{{- .Values.operator.image.tag | default .Chart.AppVersion }}
+{{- .Values.operator.image.tag | default .Chart.Version }}
 {{- end }}
 
 {{/*
