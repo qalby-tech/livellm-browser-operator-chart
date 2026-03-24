@@ -1,0 +1,120 @@
+{{- if .Values.installCRDs }}
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.1
+  name: controllers.livellm.io
+  labels:
+    {{- include "livellm-operator.labels" . | nindent 4 }}
+spec:
+  group: livellm.io
+  names:
+    kind: Controller
+    listKind: ControllerList
+    plural: controllers
+    shortNames:
+      - bc
+    singular: controller
+  scope: Namespaced
+  versions:
+    - additionalPrinterColumns:
+        - jsonPath: .status.phase
+          name: Phase
+          type: string
+        - jsonPath: .status.url
+          name: URL
+          type: string
+        - jsonPath: .status.registeredBrowserCount
+          name: Browsers
+          type: integer
+        - jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          description: |-
+            Controller is the Schema for the controllers API.
+            Each Controller CR deploys a livellm-controller instance and auto-registers Browser CRs.
+          properties:
+            apiVersion:
+              type: string
+            kind:
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: ControllerSpec defines the desired state of a Controller deployment.
+              properties:
+                browserSelector:
+                  additionalProperties:
+                    type: string
+                  description: |-
+                    BrowserSelector filters which Browser CRs to auto-register.
+                    Uses label matching on Browser CRs.
+                    If empty, all Running Browser CRs in the same namespace are registered.
+                  type: object
+                image:
+                  description: |-
+                    Image overrides the controller container image.
+                    If empty, the operator uses its configured default (DEFAULT_CONTROLLER_IMAGE env var).
+                  type: string
+                replicas:
+                  default: 1
+                  description: Replicas is the number of controller pod replicas.
+                  format: int32
+                  type: integer
+                resources:
+                  description: Resources defines CPU/memory requests and limits for the controller pod.
+                  properties:
+                    limits:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    requests:
+                      additionalProperties:
+                        type: string
+                      type: object
+                  type: object
+              type: object
+            status:
+              description: ControllerStatus defines the observed state of a Controller.
+              properties:
+                message:
+                  type: string
+                phase:
+                  enum:
+                    - Pending
+                    - Creating
+                    - Running
+                    - Failed
+                  type: string
+                podName:
+                  type: string
+                registeredBrowserCount:
+                  type: integer
+                registeredBrowsers:
+                  items:
+                    properties:
+                      name:
+                        type: string
+                      profileUid:
+                        type: string
+                      wsUrl:
+                        type: string
+                    required:
+                      - name
+                      - profileUid
+                      - wsUrl
+                    type: object
+                  type: array
+                url:
+                  type: string
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
+{{- end }}

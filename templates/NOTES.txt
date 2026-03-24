@@ -1,0 +1,31 @@
+LiveLLM Browser Operator installed.
+
+  Namespace:  {{ include "livellm-operator.namespace" . }}
+  Browser image default:    {{ include "livellm-operator.browserImage" . }}
+  Controller image default: {{ include "livellm-operator.controllerImage" . }}
+
+Create a Browser:
+
+  kubectl apply -f - <<EOF
+  apiVersion: livellm.io/v1alpha1
+  kind: Browser
+  metadata:
+    name: my-browser
+  spec:
+    profileUid: "default"
+  EOF
+
+Create a Controller (auto-registers all browsers in the namespace):
+
+  kubectl apply -f - <<EOF
+  apiVersion: livellm.io/v1alpha1
+  kind: Controller
+  metadata:
+    name: my-controller
+  spec: {}
+  EOF
+
+Check status:
+
+  kubectl get browsers
+  kubectl get controllers

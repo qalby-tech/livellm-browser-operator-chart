@@ -1,0 +1,55 @@
+# -- Operator deployment configuration
+operator:
+  image:
+    repository: kamasalyamov/livellm-browser-operator
+    # -- Tag defaults to Chart.AppVersion if empty
+    tag: ""
+    pullPolicy: Always
+  replicas: 1
+  leaderElect: false
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# -- Browser image repository.
+# The tag is derived automatically from Chart.AppVersion.
+browser:
+  image:
+    repository: kamasalyamov/livellm-browser
+
+# -- Controller image repository.
+# The tag is derived automatically from Chart.Annotations.controllerVersion
+# (falls back to deriving from Chart.AppVersion if annotation is missing).
+controller:
+  image:
+    repository: kamasalyamov/livellm-browser
+
+# -- Namespace configuration
+namespace:
+  create: true
+  name: livellm-system
+
+# -- ServiceAccount configuration
+serviceAccount:
+  create: true
+  name: livellm-operator
+  annotations: {}
+
+# -- Install CRDs as part of the chart. Set to false if you manage CRDs separately.
+installCRDs: true
+
+# -- Image pull secrets for the operator pod
+imagePullSecrets: []
+
+# -- Node selector for the operator pod
+nodeSelector: {}
+
+# -- Tolerations for the operator pod
+tolerations: []
+
+# -- Affinity rules for the operator pod
+affinity: {}

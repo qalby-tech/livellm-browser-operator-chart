@@ -1,0 +1,63 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "livellm-operator.fullname" . }}
+  labels:
+    {{- include "livellm-operator.labels" . | nindent 4 }}
+rules:
+  # Browser CRD
+  - apiGroups: ["livellm.io"]
+    resources: ["browsers"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["livellm.io"]
+    resources: ["browsers/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["livellm.io"]
+    resources: ["browsers/finalizers"]
+    verbs: ["update"]
+
+  # Controller CRD
+  - apiGroups: ["livellm.io"]
+    resources: ["controllers"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["livellm.io"]
+    resources: ["controllers/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: ["livellm.io"]
+    resources: ["controllers/finalizers"]
+    verbs: ["update"]
+
+  # Pods (status checks)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+
+  # Deployments (owned by Browser/Controller CRs)
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Services (owned by Browser/Controller CRs)
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # PVCs (browser profile storage)
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "create", "delete"]
+
+  # ConfigMaps + Secrets (cookies injection)
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+
+  # Events
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+
+  # Leader election
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
