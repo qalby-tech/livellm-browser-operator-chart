@@ -101,6 +101,12 @@ spec:
                     ProfileUID is the unique profile identifier used as browser_id in the controller.
                     Defaults to the CR name if empty.
                   type: string
+                running:
+                  default: true
+                  description: |-
+                    Running controls whether the browser workload is up. When false, the Deployment is scaled to zero (PVC retained).
+                    When omitted, defaults to true.
+                  type: boolean
                 proxy:
                   description: |-
                     Proxy configures HTTP proxy for the browser.
@@ -166,6 +172,7 @@ spec:
                     - Creating
                     - Running
                     - Failed
+                    - Stopped
                   type: string
                 podIP:
                   type: string
