@@ -33,6 +33,8 @@ spec:
               value: {{ include "livellm-operator.browserImage" . | quote }}
             - name: DEFAULT_CONTROLLER_IMAGE
               value: {{ include "livellm-operator.controllerImage" . | quote }}
+            - name: REDIS_URL
+              value: {{ include "livellm-operator.redisUrl" . | quote }}
           ports:
             - name: health
               containerPort: 8081
