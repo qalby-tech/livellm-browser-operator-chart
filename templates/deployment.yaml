@@ -31,8 +31,12 @@ spec:
           env:
             - name: DEFAULT_BROWSER_IMAGE
               value: {{ include "livellm-operator.browserImage" . | quote }}
+            - name: DEFAULT_BROWSER_PULL_POLICY
+              value: {{ .Values.browser.image.pullPolicy | quote }}
             - name: DEFAULT_CONTROLLER_IMAGE
               value: {{ include "livellm-operator.controllerImage" . | quote }}
+            - name: DEFAULT_CONTROLLER_PULL_POLICY
+              value: {{ .Values.controller.image.pullPolicy | quote }}
             - name: REDIS_URL
               value: {{ include "livellm-operator.redisUrl" . | quote }}
           ports:

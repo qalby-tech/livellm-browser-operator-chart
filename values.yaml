@@ -20,6 +20,8 @@ operator:
 browser:
   image:
     repository: kamasalyamov/livellm-browser
+    # -- Pull policy for browser pods. Options: Always, IfNotPresent, Never.
+    pullPolicy: Always
 
 # -- Controller image repository.
 # The tag is derived automatically from Chart.Annotations.controllerVersion
@@ -27,6 +29,8 @@ browser:
 controller:
   image:
     repository: kamasalyamov/livellm-browser
+    # -- Pull policy for controller pods. Options: Always, IfNotPresent, Never.
+    pullPolicy: Always
 
 # -- Namespace configuration
 namespace:
