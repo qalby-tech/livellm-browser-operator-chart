@@ -14,4 +14,4 @@ annotations:
   # controllerVersion controls the controller image tag:
   #   main:    "controller-2.0.1"      → kamasalyamov/livellm-browser:controller-2.0.1
   #   develop: "dev-controller-2.0.1"  → kamasalyamov/livellm-browser:dev-controller-2.0.1
-  controllerVersion: "dev-controller-2.1.4"
+  controllerVersion: "dev-controller-2.1.5"
