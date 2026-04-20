@@ -77,6 +77,62 @@ spec:
                         type: string
                       type: object
                   type: object
+                nodeOptions:
+                  description: |-
+                    NodeOptions sets the V8 --max-old-space-size for the Patchright Node.js driver.
+                    Given in MB (e.g. "3072"). Set to "0" to disable.
+                    Defaults to "3072" (3 GB) when empty.
+                  type: string
+                extraEnv:
+                  description: ExtraEnv is a list of additional environment variables injected into the controller container.
+                  items:
+                    description: EnvVar represents an environment variable present in a Container.
+                    properties:
+                      name:
+                        description: Name of the environment variable. Must be a C_IDENTIFIER.
+                        type: string
+                      value:
+                        description: Variable references.
+                        type: string
+                      valueFrom:
+                        description: Source for the environment variable's value.
+                        properties:
+                          configMapKeyRef:
+                            properties:
+                              key:
+                                type: string
+                              name:
+                                type: string
+                              optional:
+                                type: boolean
+                            required:
+                              - key
+                            type: object
+                          fieldRef:
+                            properties:
+                              apiVersion:
+                                type: string
+                              fieldPath:
+                                type: string
+                            required:
+                              - fieldPath
+                            type: object
+                          secretKeyRef:
+                            properties:
+                              key:
+                                type: string
+                              name:
+                                type: string
+                              optional:
+                                type: boolean
+                            required:
+                              - key
+                            type: object
+                        type: object
+                    required:
+                      - name
+                    type: object
+                  type: array
               type: object
             status:
               description: ControllerStatus defines the observed state of a Controller.
