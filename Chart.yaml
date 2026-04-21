@@ -3,7 +3,7 @@ name: livellm-browser-operator
 description: Helm chart for the LiveLLM Browser Operator — manages Browser and Controller CRDs on Kubernetes
 type: application
 
-version: "0.2.4-dev"
+version: "0.2.5-dev"
 
 # appVersion controls the browser image tag:
 #   main:    "2.0.1"      → kamasalyamov/livellm-browser:2.0.1
