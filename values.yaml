@@ -22,6 +22,9 @@ browser:
     repository: kamasalyamov/livellm-browser
     # -- Pull policy for browser pods. Options: Always, IfNotPresent, Never.
     pullPolicy: Always
+  # -- V8 --max-old-space-size for the Patchright Node.js driver (in MB).
+  # Set to "0" to disable. Defaults to "3072" (3 GB).
+  nodeOptions: "3072"
 
 # -- Controller image repository.
 # The tag is derived automatically from Chart.Annotations.controllerVersion
