@@ -39,6 +39,14 @@ spec:
               value: {{ .Values.controller.image.pullPolicy | quote }}
             - name: REDIS_URL
               value: {{ include "livellm-operator.redisUrl" . | quote }}
+            {{- if .Values.browser.env }}
+            - name: DEFAULT_BROWSER_ENV
+              value: {{ .Values.browser.env | toJson | quote }}
+            {{- end }}
+            {{- if .Values.controller.env }}
+            - name: DEFAULT_CONTROLLER_ENV
+              value: {{ .Values.controller.env | toJson | quote }}
+            {{- end }}
           ports:
             - name: health
               containerPort: 8081
