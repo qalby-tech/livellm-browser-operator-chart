@@ -24,9 +24,21 @@ browser:
     pullPolicy: Always
   # -- Default environment variables injected into all browser pods.
   # Each entry is an object with `name` and `value` (or `valueFrom`).
+  # NB: the operator deliberately does NOT set NODE_OPTIONS on browser pods —
+  # the pod hosts Chrome itself, which needs the bulk of the memory budget.
+  # Override here only if you really know you want to cap V8 heap.
   env: []
-  #  - name: NODE_OPTIONS
-  #    value: "--max-old-space-size=3072"
+
+  # -- Default resource requests/limits for browser pods (per CR override
+  # via spec.resources still wins). Map of "requests" / "limits" → cpu/memory.
+  # Operator built-in fallback is: requests 500m/2Gi, limits 1/4Gi.
+  resources: {}
+  #  requests:
+  #    cpu: "500m"
+  #    memory: "2Gi"
+  #  limits:
+  #    cpu: "1"
+  #    memory: "4Gi"
 
 # -- Controller image repository.
 # The tag is derived automatically from Chart.Annotations.controllerVersion
@@ -38,11 +50,23 @@ controller:
     pullPolicy: Always
   # -- Default environment variables injected into the controller pod.
   # Each entry is an object with `name` and `value` (or `valueFrom`).
+  # NB: the operator auto-sets NODE_OPTIONS based on the pod memory limit
+  # (min(limit/2, 4096) MiB, floored at 512 MiB). Override here only if
+  # the auto-sized value is unsuitable.
   env: []
   #  - name: NODE_OPTIONS
-  #    value: "--max-old-space-size=3072"
-  #  - name: PAGE_POOL_SIZE
-  #    value: "10"
+  #    value: "--max-old-space-size=2048"
+
+  # -- Default resource requests/limits for the controller pod (per CR override
+  # via spec.resources still wins). Map of "requests" / "limits" → cpu/memory.
+  # Operator built-in fallback is: requests 250m/512Mi, limits 500m/2Gi.
+  resources: {}
+  #  requests:
+  #    cpu: "250m"
+  #    memory: "1Gi"
+  #  limits:
+  #    cpu: "1"
+  #    memory: "4Gi"
 
   # -- Max pages per browser before autoscaling triggers.
   # Only effective when autoscaleBrowser is true. Defaults to 50.
