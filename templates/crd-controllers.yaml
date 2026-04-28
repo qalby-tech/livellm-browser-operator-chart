@@ -14,163 +14,449 @@ spec:
     listKind: ControllerList
     plural: controllers
     shortNames:
-      - bc
+    - bc
     singular: controller
   scope: Namespaced
   versions:
-    - additionalPrinterColumns:
-        - jsonPath: .status.phase
-          name: Phase
-          type: string
-        - jsonPath: .status.url
-          name: URL
-          type: string
-        - jsonPath: .status.registeredBrowserCount
-          name: Browsers
-          type: integer
-        - jsonPath: .metadata.creationTimestamp
-          name: Age
-          type: date
-      name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          description: |-
-            Controller is the Schema for the controllers API.
-            Each Controller CR deploys a livellm-controller instance and auto-registers Browser CRs.
-          properties:
-            apiVersion:
-              type: string
-            kind:
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: ControllerSpec defines the desired state of a Controller deployment.
-              properties:
-                browserSelector:
-                  additionalProperties:
-                    type: string
-                  description: |-
-                    BrowserSelector filters which Browser CRs to auto-register.
-                    Uses label matching on Browser CRs.
-                    If empty, all Running Browser CRs in the same namespace are registered.
-                  type: object
-                image:
-                  description: |-
-                    Image overrides the controller container image.
-                    If empty, the operator uses its configured default (DEFAULT_CONTROLLER_IMAGE env var).
-                  type: string
-                replicas:
-                  default: 1
-                  description: Replicas is the number of controller pod replicas.
-                  format: int32
-                  type: integer
-                resources:
-                  description: Resources defines CPU/memory requests and limits for the controller pod.
-                  properties:
-                    limits:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    requests:
-                      additionalProperties:
-                        type: string
-                      type: object
-                  type: object
-                nodeOptions:
-                  description: |-
-                    NodeOptions sets the V8 --max-old-space-size for the Patchright Node.js driver.
-                    Given in MB (e.g. "3072"). Set to "0" to disable.
-                    Defaults to "3072" (3 GB) when empty.
-                  type: string
-                extraEnv:
-                  description: ExtraEnv is a list of additional environment variables injected into the controller container.
-                  items:
-                    description: EnvVar represents an environment variable present in a Container.
-                    properties:
-                      name:
-                        description: Name of the environment variable. Must be a C_IDENTIFIER.
-                        type: string
-                      value:
-                        description: Variable references.
-                        type: string
-                      valueFrom:
-                        description: Source for the environment variable's value.
-                        properties:
-                          configMapKeyRef:
-                            properties:
-                              key:
-                                type: string
-                              name:
-                                type: string
-                              optional:
-                                type: boolean
-                            required:
+  - additionalPrinterColumns:
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.url
+      name: URL
+      type: string
+    - jsonPath: .status.registeredBrowserCount
+      name: Browsers
+      type: integer
+    - jsonPath: .status.totalPageCount
+      name: Pages
+      priority: 1
+      type: integer
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          Controller is the Schema for the controllers API.
+          Each Controller CR deploys a livellm-controller instance and auto-registers Browser CRs.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ControllerSpec defines the desired state of a Controller
+              deployment.
+            properties:
+              autoscaleBrowser:
+                description: |-
+                  AutoscaleBrowser enables automatic creation of new Browser CRs when
+                  existing browsers reach maxPagesPerBrowser.
+                  The operator creates Browser CRs named <controller>-autoscale-<N>.
+                type: boolean
+              autoscaleBrowserTemplate:
+                description: |-
+                  AutoscaleBrowserTemplate specifies the Browser spec used when creating
+                  autoscaled browsers.  If empty, the operator copies the spec from the
+                  first manually-defined Browser CR in the same namespace (matched by
+                  browserSelector).  At a minimum, profileUid is generated automatically.
+                properties:
+                  env:
+                    description: Env is a list of environment variables injected into
+                      autoscaled browser pods.
+                    items:
+                      description: EnvVar represents an environment variable present
+                        in a Container.
+                      properties:
+                        name:
+                          description: Name of the environment variable. Must be a
+                            C_IDENTIFIER.
+                          type: string
+                        value:
+                          description: |-
+                            Variable references $(VAR_NAME) are expanded
+                            using the previously defined environment variables in the container and
+                            any service environment variables. If a variable cannot be resolved,
+                            the reference in the input string will be unchanged. Double $$ are reduced
+                            to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                            "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                            Escaped references will never be expanded, regardless of whether the variable
+                            exists or not.
+                            Defaults to "".
+                          type: string
+                        valueFrom:
+                          description: Source for the environment variable's value.
+                            Cannot be used if value is not empty.
+                          properties:
+                            configMapKeyRef:
+                              description: Selects a key of a ConfigMap.
+                              properties:
+                                key:
+                                  description: The key to select.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                optional:
+                                  description: Specify whether the ConfigMap or its
+                                    key must be defined
+                                  type: boolean
+                              required:
                               - key
-                            type: object
-                          fieldRef:
-                            properties:
-                              apiVersion:
-                                type: string
-                              fieldPath:
-                                type: string
-                            required:
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            fieldRef:
+                              description: |-
+                                Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                                spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                              properties:
+                                apiVersion:
+                                  description: Version of the schema the FieldPath
+                                    is written in terms of, defaults to "v1".
+                                  type: string
+                                fieldPath:
+                                  description: Path of the field to select in the
+                                    specified API version.
+                                  type: string
+                              required:
                               - fieldPath
-                            type: object
-                          secretKeyRef:
-                            properties:
-                              key:
-                                type: string
-                              name:
-                                type: string
-                              optional:
-                                type: boolean
-                            required:
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            resourceFieldRef:
+                              description: |-
+                                Selects a resource of the container: only resources limits and requests
+                                (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                              properties:
+                                containerName:
+                                  description: 'Container name: required for volumes,
+                                    optional for env vars'
+                                  type: string
+                                divisor:
+                                  anyOf:
+                                  - type: integer
+                                  - type: string
+                                  description: Specifies the output format of the
+                                    exposed resources, defaults to "1"
+                                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                  x-kubernetes-int-or-string: true
+                                resource:
+                                  description: 'Required: resource to select'
+                                  type: string
+                              required:
+                              - resource
+                              type: object
+                              x-kubernetes-map-type: atomic
+                            secretKeyRef:
+                              description: Selects a key of a secret in the pod's
+                                namespace
+                              properties:
+                                key:
+                                  description: The key of the secret to select from.  Must
+                                    be a valid secret key.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                  type: string
+                                optional:
+                                  description: Specify whether the Secret or its key
+                                    must be defined
+                                  type: boolean
+                              required:
                               - key
-                            type: object
-                        type: object
-                    required:
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          type: object
+                      required:
                       - name
-                    type: object
-                  type: array
-              type: object
-            status:
-              description: ControllerStatus defines the observed state of a Controller.
-              properties:
-                message:
-                  type: string
-                phase:
-                  enum:
-                    - Pending
-                    - Creating
-                    - Running
-                    - Failed
-                  type: string
-                podName:
-                  type: string
-                registeredBrowserCount:
-                  type: integer
-                registeredBrowsers:
-                  items:
+                      type: object
+                    type: array
+                  extensions:
+                    description: Extensions to install in autoscaled browsers.
+                    items:
+                      type: string
+                    type: array
+                  reclaimPolicy:
+                    default: Delete
+                    description: ReclaimPolicy for the PVC when the autoscaled browser
+                      is deleted.
+                    enum:
+                    - Retain
+                    - Delete
+                    type: string
+                  resources:
+                    description: Resources for the autoscaled browser pod.
                     properties:
-                      name:
-                        type: string
-                      profileUid:
-                        type: string
-                      wsUrl:
-                        type: string
-                    required:
-                      - name
-                      - profileUid
-                      - wsUrl
+                      limits:
+                        additionalProperties:
+                          type: string
+                        description: Limits describes the maximum resources allowed.
+                        type: object
+                      requests:
+                        additionalProperties:
+                          type: string
+                        description: Requests describes the minimum resources required.
+                        type: object
                     type: object
-                  type: array
-                url:
+                  shmSize:
+                    description: ShmSize is the /dev/shm size (e.g. "4Gi").
+                    type: string
+                  storage:
+                    description: Storage is the PVC size (e.g. "1Gi").
+                    type: string
+                type: object
+              browserSelector:
+                additionalProperties:
                   type: string
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                description: |-
+                  BrowserSelector filters which Browser CRs to auto-register.
+                  Uses label matching on Browser CRs.
+                  If empty, all Running Browser CRs in the same namespace are registered.
+                type: object
+              env:
+                description: Env is a list of environment variables injected into
+                  the controller container.
+                items:
+                  description: EnvVar represents an environment variable present in
+                    a Container.
+                  properties:
+                    name:
+                      description: Name of the environment variable. Must be a C_IDENTIFIER.
+                      type: string
+                    value:
+                      description: |-
+                        Variable references $(VAR_NAME) are expanded
+                        using the previously defined environment variables in the container and
+                        any service environment variables. If a variable cannot be resolved,
+                        the reference in the input string will be unchanged. Double $$ are reduced
+                        to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                        "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                        Escaped references will never be expanded, regardless of whether the variable
+                        exists or not.
+                        Defaults to "".
+                      type: string
+                    valueFrom:
+                      description: Source for the environment variable's value. Cannot
+                        be used if value is not empty.
+                      properties:
+                        configMapKeyRef:
+                          description: Selects a key of a ConfigMap.
+                          properties:
+                            key:
+                              description: The key to select.
+                              type: string
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            optional:
+                              description: Specify whether the ConfigMap or its key
+                                must be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        fieldRef:
+                          description: |-
+                            Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                            spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                          properties:
+                            apiVersion:
+                              description: Version of the schema the FieldPath is
+                                written in terms of, defaults to "v1".
+                              type: string
+                            fieldPath:
+                              description: Path of the field to select in the specified
+                                API version.
+                              type: string
+                          required:
+                          - fieldPath
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        resourceFieldRef:
+                          description: |-
+                            Selects a resource of the container: only resources limits and requests
+                            (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                          properties:
+                            containerName:
+                              description: 'Container name: required for volumes,
+                                optional for env vars'
+                              type: string
+                            divisor:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: Specifies the output format of the exposed
+                                resources, defaults to "1"
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            resource:
+                              description: 'Required: resource to select'
+                              type: string
+                          required:
+                          - resource
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        secretKeyRef:
+                          description: Selects a key of a secret in the pod's namespace
+                          properties:
+                            key:
+                              description: The key of the secret to select from.  Must
+                                be a valid secret key.
+                              type: string
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            optional:
+                              description: Specify whether the Secret or its key must
+                                be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                      type: object
+                  required:
+                  - name
+                  type: object
+                type: array
+              image:
+                description: |-
+                  Image overrides the controller container image.
+                  If empty, the operator uses its configured default (DEFAULT_CONTROLLER_IMAGE env var).
+                type: string
+              maxPagesPerBrowser:
+                description: |-
+                  MaxPagesPerBrowser sets the maximum number of concurrent pages (sessions)
+                  a single browser may hold.  When the limit is reached, new sessions are
+                  routed to a different browser or — if autoscaleBrowser is true — a new
+                  Browser CR is created automatically.
+                  Defaults to 50 when autoscaleBrowser is true.
+                format: int32
+                type: integer
+              replicas:
+                default: 1
+                description: Replicas is the number of controller pod replicas.
+                format: int32
+                type: integer
+              resources:
+                description: Resources defines CPU/memory requests and limits for
+                  the controller pod.
+                properties:
+                  limits:
+                    additionalProperties:
+                      type: string
+                    description: Limits describes the maximum resources allowed.
+                    type: object
+                  requests:
+                    additionalProperties:
+                      type: string
+                    description: Requests describes the minimum resources required.
+                    type: object
+                type: object
+            type: object
+          status:
+            description: ControllerStatus defines the observed state of a Controller.
+            properties:
+              autoscaledBrowserCount:
+                description: AutoscaledBrowserCount is the number of Browser CRs created
+                  by autoscaling.
+                type: integer
+              message:
+                description: Message is a human-readable status message.
+                type: string
+              phase:
+                description: Phase is the current lifecycle phase.
+                enum:
+                - Pending
+                - Creating
+                - Running
+                - Failed
+                type: string
+              podName:
+                description: PodName is the name of a running controller pod.
+                type: string
+              registeredBrowserCount:
+                description: RegisteredBrowserCount is the number of registered browsers
+                  (for printer column).
+                type: integer
+              registeredBrowsers:
+                description: RegisteredBrowsers lists browsers currently registered
+                  with the controller.
+                items:
+                  description: RegisteredBrowser records a browser that has been registered
+                    with the controller.
+                  properties:
+                    name:
+                      description: Name is the Browser CR name.
+                      type: string
+                    pageCount:
+                      description: PageCount is the current number of open pages/sessions
+                        on this browser.
+                      type: integer
+                    profileUid:
+                      description: ProfileUID is the profile identifier used as browser_id.
+                      type: string
+                    wsUrl:
+                      description: WsURL is the CDP WebSocket URL registered with
+                        the controller.
+                      type: string
+                  required:
+                  - name
+                  - profileUid
+                  - wsUrl
+                  type: object
+                type: array
+              totalPageCount:
+                description: TotalPageCount is the sum of open pages across all registered
+                  browsers.
+                type: integer
+              url:
+                description: URL is the in-cluster base URL for the controller API
+                  (e.g. http://name:8000/parser).
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 {{- end }}

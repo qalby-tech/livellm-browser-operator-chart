@@ -14,184 +14,317 @@ spec:
     listKind: BrowserList
     plural: browsers
     shortNames:
-      - br
+    - br
     singular: browser
   scope: Namespaced
   versions:
-    - additionalPrinterColumns:
-        - jsonPath: .spec.profileUid
-          name: Profile
-          type: string
-        - jsonPath: .status.phase
-          name: Phase
-          type: string
-        - jsonPath: .status.wsUrl
-          name: WS URL
-          priority: 1
-          type: string
-        - jsonPath: .status.podIP
-          name: Pod IP
-          priority: 1
-          type: string
-        - jsonPath: .metadata.creationTimestamp
-          name: Age
-          type: date
-      name: v1alpha1
-      schema:
-        openAPIV3Schema:
-          description: |-
-            Browser is the Schema for the browsers API.
-            Each Browser CR results in one browser pod with a persistent profile.
-          properties:
-            apiVersion:
-              type: string
-            kind:
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: BrowserSpec defines the desired state of a Browser instance.
-              properties:
-                cookies:
-                  description: |-
-                    Cookies loads a JSON array of cookies from a ConfigMap or Secret
-                    and injects them into the browser at creation time.
+  - additionalPrinterColumns:
+    - jsonPath: .spec.profileUid
+      name: Profile
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.wsUrl
+      name: WS URL
+      priority: 1
+      type: string
+    - jsonPath: .status.podIP
+      name: Pod IP
+      priority: 1
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          Browser is the Schema for the browsers API.
+          Each Browser CR results in one browser pod with a persistent profile.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BrowserSpec defines the desired state of a Browser instance.
+            properties:
+              cookies:
+                description: |-
+                  Cookies loads a JSON array of cookies from a ConfigMap or Secret
+                  and injects them into the browser at creation time.
+                properties:
+                  configMapRef:
+                    description: ConfigMapRef references a ConfigMap key containing
+                      a JSON array of cookies.
+                    properties:
+                      key:
+                        default: cookies.json
+                        description: Key within the resource. Defaults to "cookies.json".
+                        type: string
+                      name:
+                        description: Name of the ConfigMap or Secret.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                  secretRef:
+                    description: SecretRef references a Secret key containing a JSON
+                      array of cookies.
+                    properties:
+                      key:
+                        default: cookies.json
+                        description: Key within the resource. Defaults to "cookies.json".
+                        type: string
+                      name:
+                        description: Name of the ConfigMap or Secret.
+                        type: string
+                    required:
+                    - name
+                    type: object
+                type: object
+              env:
+                description: Env is a list of environment variables injected into
+                  the browser container.
+                items:
+                  description: EnvVar represents an environment variable present in
+                    a Container.
                   properties:
-                    configMapRef:
-                      description: ConfigMapRef references a ConfigMap key containing a JSON array of cookies.
+                    name:
+                      description: Name of the environment variable. Must be a C_IDENTIFIER.
+                      type: string
+                    value:
+                      description: |-
+                        Variable references $(VAR_NAME) are expanded
+                        using the previously defined environment variables in the container and
+                        any service environment variables. If a variable cannot be resolved,
+                        the reference in the input string will be unchanged. Double $$ are reduced
+                        to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                        "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                        Escaped references will never be expanded, regardless of whether the variable
+                        exists or not.
+                        Defaults to "".
+                      type: string
+                    valueFrom:
+                      description: Source for the environment variable's value. Cannot
+                        be used if value is not empty.
                       properties:
-                        key:
-                          default: cookies.json
-                          description: Key within the resource. Defaults to "cookies.json".
-                          type: string
-                        name:
-                          description: Name of the ConfigMap or Secret.
-                          type: string
-                      required:
-                        - name
+                        configMapKeyRef:
+                          description: Selects a key of a ConfigMap.
+                          properties:
+                            key:
+                              description: The key to select.
+                              type: string
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            optional:
+                              description: Specify whether the ConfigMap or its key
+                                must be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        fieldRef:
+                          description: |-
+                            Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                            spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                          properties:
+                            apiVersion:
+                              description: Version of the schema the FieldPath is
+                                written in terms of, defaults to "v1".
+                              type: string
+                            fieldPath:
+                              description: Path of the field to select in the specified
+                                API version.
+                              type: string
+                          required:
+                          - fieldPath
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        resourceFieldRef:
+                          description: |-
+                            Selects a resource of the container: only resources limits and requests
+                            (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                          properties:
+                            containerName:
+                              description: 'Container name: required for volumes,
+                                optional for env vars'
+                              type: string
+                            divisor:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              description: Specifies the output format of the exposed
+                                resources, defaults to "1"
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            resource:
+                              description: 'Required: resource to select'
+                              type: string
+                          required:
+                          - resource
+                          type: object
+                          x-kubernetes-map-type: atomic
+                        secretKeyRef:
+                          description: Selects a key of a secret in the pod's namespace
+                          properties:
+                            key:
+                              description: The key of the secret to select from.  Must
+                                be a valid secret key.
+                              type: string
+                            name:
+                              default: ""
+                              description: |-
+                                Name of the referent.
+                                This field is effectively required, but due to backwards compatibility is
+                                allowed to be empty. Instances of this type with an empty value here are
+                                almost certainly wrong.
+                                More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                              type: string
+                            optional:
+                              description: Specify whether the Secret or its key must
+                                be defined
+                              type: boolean
+                          required:
+                          - key
+                          type: object
+                          x-kubernetes-map-type: atomic
                       type: object
-                    secretRef:
-                      description: SecretRef references a Secret key containing a JSON array of cookies.
-                      properties:
-                        key:
-                          default: cookies.json
-                          description: Key within the resource. Defaults to "cookies.json".
-                          type: string
-                        name:
-                          description: Name of the ConfigMap or Secret.
-                          type: string
-                      required:
-                        - name
-                      type: object
-                  type: object
-                extensions:
-                  description: |-
-                    Extensions is a list of Chrome Web Store extension IDs to install at creation time.
-                    The launcher downloads and injects them into the profile before Chrome starts.
-                  items:
-                    type: string
-                  type: array
-                image:
-                  description: |-
-                    Image overrides the browser container image.
-                    If empty, the operator uses its configured default (DEFAULT_BROWSER_IMAGE env var).
-                  type: string
-                nodeOptions:
-                  description: |-
-                    NodeOptions sets the V8 --max-old-space-size for the Patchright Node.js driver.
-                    Given in MB (e.g. "3072"). Set to "0" to disable.
-                    Defaults to "3072" (3 GB) when empty.
-                  type: string
-                profileUid:
-                  description: |-
-                    ProfileUID is the unique profile identifier used as browser_id in the controller.
-                    Defaults to the CR name if empty.
-                  type: string
-                running:
-                  default: true
-                  description: |-
-                    Running controls whether the browser workload is up. When false, the Deployment is scaled to zero (PVC retained).
-                    When omitted, defaults to true.
-                  type: boolean
-                proxy:
-                  description: |-
-                    Proxy configures HTTP proxy for the browser.
-                    Only applied when profileUid != "default" (operator creates a new browser via launcher API).
-                  properties:
-                    bypass:
-                      description: Bypass is a comma-separated list of hosts to bypass.
-                      type: string
-                    password:
-                      description: Password for proxy authentication.
-                      type: string
-                    server:
-                      description: Server is the proxy URL (e.g. http://proxy:8080).
-                      type: string
-                    username:
-                      description: Username for proxy authentication.
-                      type: string
                   required:
-                    - server
+                  - name
                   type: object
-                reclaimPolicy:
-                  default: Retain
-                  description: |-
-                    ReclaimPolicy determines what happens to the PVC when the Browser CR is deleted.
-                    "Retain" (default) keeps profile data; "Delete" removes it.
-                  enum:
-                    - Retain
-                    - Delete
+                type: array
+              extensions:
+                description: |-
+                  Extensions is a list of Chrome Web Store extension IDs to install at creation time.
+                  The launcher downloads and injects them into the profile before Chrome starts.
+                items:
                   type: string
-                resources:
-                  description: Resources defines CPU/memory requests and limits for the browser pod.
-                  properties:
-                    limits:
-                      additionalProperties:
-                        type: string
-                      type: object
-                    requests:
-                      additionalProperties:
-                        type: string
-                      type: object
-                  type: object
-                shmSize:
-                  default: 4Gi
-                  description: ShmSize is the /dev/shm size for Chrome (e.g. "4Gi").
-                  type: string
-                storage:
-                  default: 1Gi
-                  description: Storage is the PVC size for profile data (e.g. "1Gi").
-                  type: string
-              required:
-                - profileUid
-              type: object
-            status:
-              description: BrowserStatus defines the observed state of a Browser.
-              properties:
-                cdpPort:
-                  type: integer
-                message:
-                  type: string
-                phase:
-                  enum:
-                    - Pending
-                    - Creating
-                    - Running
-                    - Failed
-                    - Stopped
-                  type: string
-                podIP:
-                  type: string
-                podName:
-                  type: string
-                wsEndpoint:
-                  type: string
-                wsUrl:
-                  type: string
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                type: array
+              image:
+                description: |-
+                  Image overrides the browser container image.
+                  If empty, the operator uses its configured default (DEFAULT_BROWSER_IMAGE env var).
+                type: string
+              profileUid:
+                description: |-
+                  ProfileUID is the unique profile identifier used as browser_id in the controller.
+                  Defaults to the CR name if empty.
+                type: string
+              proxy:
+                description: |-
+                  Proxy configures HTTP proxy for the browser.
+                  Only applied when profileUid != "default" (operator creates a new browser via launcher API).
+                properties:
+                  bypass:
+                    description: Bypass is a comma-separated list of hosts to bypass.
+                    type: string
+                  password:
+                    description: Password for proxy authentication.
+                    type: string
+                  server:
+                    description: Server is the proxy URL (e.g. http://proxy:8080).
+                    type: string
+                  username:
+                    description: Username for proxy authentication.
+                    type: string
+                required:
+                - server
+                type: object
+              reclaimPolicy:
+                default: Retain
+                description: |-
+                  ReclaimPolicy determines what happens to the PVC when the Browser CR is deleted.
+                  "Retain" (default) keeps profile data; "Delete" removes it.
+                enum:
+                - Retain
+                - Delete
+                type: string
+              resources:
+                description: Resources defines CPU/memory requests and limits for
+                  the browser pod.
+                properties:
+                  limits:
+                    additionalProperties:
+                      type: string
+                    description: Limits describes the maximum resources allowed.
+                    type: object
+                  requests:
+                    additionalProperties:
+                      type: string
+                    description: Requests describes the minimum resources required.
+                    type: object
+                type: object
+              running:
+                default: true
+                description: |-
+                  Running controls whether the browser workload is up. When false, the Deployment is scaled to zero (PVC retained).
+                  When omitted, defaults to true.
+                type: boolean
+              shmSize:
+                default: 4Gi
+                description: ShmSize is the /dev/shm size for Chrome (e.g. "4Gi").
+                type: string
+              storage:
+                default: 1Gi
+                description: Storage is the PVC size for profile data (e.g. "1Gi").
+                type: string
+            required:
+            - profileUid
+            type: object
+          status:
+            description: BrowserStatus defines the observed state of a Browser.
+            properties:
+              cdpPort:
+                description: CdpPort is the CDP proxy port inside the pod.
+                type: integer
+              message:
+                description: Message is a human-readable status message.
+                type: string
+              phase:
+                description: Phase is the current lifecycle phase.
+                enum:
+                - Pending
+                - Creating
+                - Running
+                - Failed
+                - Stopped
+                type: string
+              podIP:
+                description: PodIP is the cluster IP of the running browser pod.
+                type: string
+              podName:
+                description: PodName is the name of the running browser pod.
+                type: string
+              wsUrl:
+                description: 'WsURL is the full CDP WebSocket URL: ws://<podIP>:<cdpPort>/devtools/browser/<id>'
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 {{- end }}

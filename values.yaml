@@ -22,9 +22,11 @@ browser:
     repository: kamasalyamov/livellm-browser
     # -- Pull policy for browser pods. Options: Always, IfNotPresent, Never.
     pullPolicy: Always
-  # -- V8 --max-old-space-size for the Patchright Node.js driver (in MB).
-  # Set to "0" to disable. Defaults to "3072" (3 GB).
-  nodeOptions: "3072"
+  # -- Default environment variables injected into all browser pods.
+  # Each entry is an object with `name` and `value` (or `valueFrom`).
+  env: []
+  #  - name: NODE_OPTIONS
+  #    value: "--max-old-space-size=3072"
 
 # -- Controller image repository.
 # The tag is derived automatically from Chart.Annotations.controllerVersion
@@ -34,13 +36,38 @@ controller:
     repository: kamasalyamov/livellm-browser
     # -- Pull policy for controller pods. Options: Always, IfNotPresent, Never.
     pullPolicy: Always
-  # -- V8 --max-old-space-size for the Patchright Node.js driver (in MB).
-  # Set to "0" to disable. Defaults to "3072" (3 GB).
-  nodeOptions: "3072"
-  # -- Additional environment variables injected into controller pods.
-  extraEnv: []
-  #  - name: MY_VAR
-  #    value: "my-value"
+  # -- Default environment variables injected into the controller pod.
+  # Each entry is an object with `name` and `value` (or `valueFrom`).
+  env: []
+  #  - name: NODE_OPTIONS
+  #    value: "--max-old-space-size=3072"
+  #  - name: PAGE_POOL_SIZE
+  #    value: "10"
+
+  # -- Max pages per browser before autoscaling triggers.
+  # Only effective when autoscaleBrowser is true. Defaults to 50.
+  maxPagesPerBrowser: 50
+
+  # -- Enable automatic creation of new Browser CRs when
+  # existing browsers reach maxPagesPerBrowser.
+  autoscaleBrowser: false
+
+  # -- Template for autoscaled Browser CRs. If empty, the operator
+  # copies the spec from the first manually-defined Browser CR.
+  autoscaleBrowserTemplate: {}
+  #  resources:
+  #    requests:
+  #      cpu: "4"
+  #      memory: "8Gi"
+  #    limits:
+  #      cpu: "4"
+  #      memory: "8Gi"
+  #  storage: "8Gi"
+  #  shmSize: "8Gi"
+  #  env:
+  #    - name: NODE_OPTIONS
+  #      value: "--max-old-space-size=6144"
+  #  reclaimPolicy: Delete
 
 # -- Namespace configuration
 namespace:
