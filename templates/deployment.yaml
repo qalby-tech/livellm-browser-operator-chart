@@ -47,6 +47,14 @@ spec:
             - name: DEFAULT_CONTROLLER_ENV
               value: {{ .Values.controller.env | toJson | quote }}
             {{- end }}
+            {{- if .Values.browser.resources }}
+            - name: DEFAULT_BROWSER_RESOURCES
+              value: {{ .Values.browser.resources | toJson | quote }}
+            {{- end }}
+            {{- if .Values.controller.resources }}
+            - name: DEFAULT_CONTROLLER_RESOURCES
+              value: {{ .Values.controller.resources | toJson | quote }}
+            {{- end }}
           ports:
             - name: health
               containerPort: 8081
