@@ -90,14 +90,3 @@ Controller image — full <repo>:<tag> string.
 {{- define "livellm-operator.controllerImage" -}}
 {{ .Values.controller.image.repository }}:{{ include "livellm-operator.controllerTag" . }}
 {{- end }}
-
-{{/*
-Redis URL — auto-generated for built-in Redis, or uses the provided external URL.
-*/}}
-{{- define "livellm-operator.redisUrl" -}}
-{{- if .Values.redis.enabled -}}
-redis://{{ include "livellm-operator.fullname" . }}-redis.{{ include "livellm-operator.namespace" . }}.svc.cluster.local:6379/0
-{{- else -}}
-{{- .Values.redis.url -}}
-{{- end -}}
-{{- end }}
