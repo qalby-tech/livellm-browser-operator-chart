@@ -6,8 +6,6 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.1
   name: controllers.livellm.io
-  labels:
-    {{- include "livellm-operator.labels" . | nindent 4 }}
 spec:
   group: livellm.io
   names:
@@ -413,6 +411,15 @@ spec:
                   Defaults to 50 when autoscaleBrowser is true.
                 format: int32
                 type: integer
+              podLabels:
+                additionalProperties:
+                  type: string
+                description: |-
+                  PodLabels are extra labels stamped onto the controller pods (not the
+                  Deployment or the selector). General-purpose passthrough — e.g. set
+                  istio.io/dataplane-mode=none to keep a pod out of the ambient mesh, or a
+                  marker label whose change forces a clean rollout. Empty by default.
+                type: object
               replicas:
                 default: 1
                 description: Replicas is the number of controller pod replicas.
