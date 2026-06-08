@@ -37,6 +37,18 @@ spec:
               value: {{ include "livellm-operator.controllerImage" . | quote }}
             - name: DEFAULT_CONTROLLER_PULL_POLICY
               value: {{ .Values.controller.image.pullPolicy | quote }}
+            - name: DEFAULT_AGENT_IMAGE
+              value: "{{ .Values.agent.image.repository }}:{{ .Values.agent.image.tag }}"
+            - name: DEFAULT_AGENT_PULL_POLICY
+              value: {{ .Values.agent.image.pullPolicy | quote }}
+            {{- if .Values.agent.env }}
+            - name: DEFAULT_AGENT_ENV
+              value: {{ .Values.agent.env | toJson | quote }}
+            {{- end }}
+            {{- if .Values.agent.resources }}
+            - name: DEFAULT_AGENT_RESOURCES
+              value: {{ .Values.agent.resources | toJson | quote }}
+            {{- end }}
             {{- if .Values.browser.env }}
             - name: DEFAULT_BROWSER_ENV
               value: {{ .Values.browser.env | toJson | quote }}
