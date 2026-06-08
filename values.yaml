@@ -100,9 +100,10 @@ agent:
   image:
     repository: kamasalyamov/livellm-browser
     # develop builds dev-tagged images; the cluster deploys this chart from the
-    # develop branch, so pull the dev agent image. Switch to agent-0.1.0 when
-    # promoting to a main/release line.
-    tag: dev-agent-0.1.0
+    # develop branch, so pull the dev agent image. Bump in lockstep with
+    # agent/pyproject.toml so a new agent build actually rolls the pod (the tag
+    # is the roll trigger). Switch to agent-X.Y.Z on a main/release line.
+    tag: dev-agent-0.1.1
     pullPolicy: Always
   # -- Default env injected into agent pods (per-CR spec.env still appends).
   env: []
