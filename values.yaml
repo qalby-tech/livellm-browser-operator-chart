@@ -103,7 +103,7 @@ agent:
     # develop branch, so pull the dev agent image. Bump in lockstep with
     # agent/pyproject.toml so a new agent build actually rolls the pod (the tag
     # is the roll trigger). Switch to agent-X.Y.Z on a main/release line.
-    tag: dev-agent-0.1.2
+    tag: dev-agent-0.1.3
     pullPolicy: Always
   # -- Default env injected into agent pods (per-CR spec.env still appends).
   # Disable browser-use's PostHog telemetry (the dev box can't reach it; it
