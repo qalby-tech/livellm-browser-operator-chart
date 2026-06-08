@@ -106,7 +106,11 @@ agent:
     tag: dev-agent-0.1.1
     pullPolicy: Always
   # -- Default env injected into agent pods (per-CR spec.env still appends).
-  env: []
+  # Disable browser-use's PostHog telemetry (the dev box can't reach it; it
+  # floods logs with SSL backoff errors).
+  env:
+    - name: ANONYMIZED_TELEMETRY
+      value: "false"
   # -- Default resource requests/limits (per-CR spec.resources wins).
   # Operator built-in fallback: requests 250m/512Mi, limits 1/1Gi.
   resources: {}
