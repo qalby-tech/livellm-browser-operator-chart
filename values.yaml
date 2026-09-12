@@ -94,28 +94,6 @@ controller:
   #      value: "--max-old-space-size=6144"
   #  reclaimPolicy: Delete
 
-# -- Browser-agent runtime defaults (the AI layer that drives a browser as a
-# reviewable trajectory). The image lives in the same repo as the browser; tag
-# is the agent component version (independent of browser/controller versions).
-agent:
-  image:
-    repository: kamasalyamov/livellm-browser
-    # develop builds dev-tagged images; the cluster deploys this chart from the
-    # develop branch, so pull the dev agent image. Bump in lockstep with
-    # agent/pyproject.toml so a new agent build actually rolls the pod (the tag
-    # is the roll trigger). Switch to agent-X.Y.Z on a main/release line.
-    tag: dev-agent-0.1.15
-    pullPolicy: Always
-  # -- Default env injected into agent pods (per-CR spec.env still appends).
-  # Disable browser-use's PostHog telemetry (the dev box can't reach it; it
-  # floods logs with SSL backoff errors).
-  env:
-    - name: ANONYMIZED_TELEMETRY
-      value: "false"
-  # -- Default resource requests/limits (per-CR spec.resources wins).
-  # Operator built-in fallback: requests 250m/512Mi, limits 1/1Gi.
-  resources: {}
-
 # -- Namespace configuration
 namespace:
   create: true
