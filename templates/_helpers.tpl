@@ -67,21 +67,11 @@ Tag comes from Chart.AppVersion (e.g. "2.0.1" or "dev-2.0.1").
 {{- end }}
 
 {{/*
-Controller image tag.
-Uses Chart.Annotations.controllerVersion if set.
-Otherwise derives from Chart.AppVersion:
-  "dev-X.Y.Z" → "dev-controller-X.Y.Z"
-  "X.Y.Z"     → "controller-X.Y.Z"
+Controller image tag — Chart.Annotations.controllerVersion (set by the
+livellm-browser CI on every controller build).
 */}}
 {{- define "livellm-operator.controllerTag" -}}
-{{- $anno := index .Chart.Annotations "controllerVersion" -}}
-{{- if $anno -}}
-{{ $anno }}
-{{- else if hasPrefix "dev-" .Chart.AppVersion -}}
-dev-controller-{{ trimPrefix "dev-" .Chart.AppVersion }}
-{{- else -}}
-controller-{{ .Chart.AppVersion }}
-{{- end -}}
+{{ index .Chart.Annotations "controllerVersion" | required "Chart.annotations.controllerVersion is required" }}
 {{- end }}
 
 {{/*

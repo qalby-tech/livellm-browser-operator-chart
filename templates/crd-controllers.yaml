@@ -454,10 +454,8 @@ spec:
               phase:
                 description: Phase is the current lifecycle phase.
                 enum:
-                - Pending
                 - Creating
                 - Running
-                - Failed
                 type: string
               podName:
                 description: PodName is the name of a running controller pod.

@@ -41,8 +41,7 @@ browser:
   #    memory: "4Gi"
 
 # -- Controller image repository.
-# The tag is derived automatically from Chart.Annotations.controllerVersion
-# (falls back to deriving from Chart.AppVersion if annotation is missing).
+# The tag comes from Chart.Annotations.controllerVersion.
 controller:
   image:
     repository: kamasalyamov/livellm-browser
@@ -68,31 +67,6 @@ controller:
     limits:
       cpu: "1"
       memory: "4Gi"
-
-  # -- Max pages per browser before autoscaling triggers.
-  # Only effective when autoscaleBrowser is true. Defaults to 50.
-  maxPagesPerBrowser: 50
-
-  # -- Enable automatic creation of new Browser CRs when
-  # existing browsers reach maxPagesPerBrowser.
-  autoscaleBrowser: false
-
-  # -- Template for autoscaled Browser CRs. If empty, the operator
-  # copies the spec from the first manually-defined Browser CR.
-  autoscaleBrowserTemplate: {}
-  #  resources:
-  #    requests:
-  #      cpu: "4"
-  #      memory: "8Gi"
-  #    limits:
-  #      cpu: "4"
-  #      memory: "8Gi"
-  #  storage: "8Gi"
-  #  shmSize: "8Gi"
-  #  env:
-  #    - name: NODE_OPTIONS
-  #      value: "--max-old-space-size=6144"
-  #  reclaimPolicy: Delete
 
 # -- Namespace configuration
 namespace:
