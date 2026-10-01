@@ -452,6 +452,13 @@ spec:
                   Defaults to 50 when autoscaleBrowser is true.
                 format: int32
                 type: integer
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                description: |-
+                  NodeSelector restricts which nodes the controller pods may run on (a plain
+                  passthrough to the pod's nodeSelector). Empty by default.
+                type: object
               podLabels:
                 additionalProperties:
                   type: string

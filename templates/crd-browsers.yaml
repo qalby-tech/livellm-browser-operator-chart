@@ -223,6 +223,13 @@ spec:
                   Image overrides the browser container image.
                   If empty, the operator uses its configured default (DEFAULT_BROWSER_IMAGE env var).
                 type: string
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                description: |-
+                  NodeSelector restricts which nodes the browser pod may run on (a plain
+                  passthrough to the pod's nodeSelector). Empty by default.
+                type: object
               podLabels:
                 additionalProperties:
                   type: string
