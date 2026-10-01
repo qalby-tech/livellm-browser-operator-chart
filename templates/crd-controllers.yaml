@@ -456,8 +456,8 @@ spec:
                 additionalProperties:
                   type: string
                 description: |-
-                  NodeSelector restricts which nodes the controller pods may run on (a plain
-                  passthrough to the pod's nodeSelector). Empty by default.
+                  NodeSelector restricts which nodes the controller pods may run on (a
+                  plain passthrough to the pod's nodeSelector). Empty by default.
                 type: object
               podLabels:
                 additionalProperties:
