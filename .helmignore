@@ -21,3 +21,6 @@
 .idea/
 *.tmproj
 .vscode/
+# Repo checks, not chart content
+tests/
+.github/

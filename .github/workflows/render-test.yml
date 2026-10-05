@@ -1,0 +1,38 @@
+name: render-test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  render-test:
+    runs-on: ubuntu-latest
+    env:
+      # Optional: a read token for qalby-tech/livellm-browser-operator. With it
+      # the CRDs are compared with the operator's deploy/crd.yaml on the same
+      # branch name; without it that comparison is skipped (and says so).
+      OPERATOR_REPO_TOKEN: ${{ secrets.OPERATOR_REPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+
+      - name: Install PyYAML
+        run: python3 -m pip install --quiet pyyaml
+
+      - name: Fetch the operator's CRDs
+        if: env.OPERATOR_REPO_TOKEN != ''
+        run: |
+          BR="${GITHUB_BASE_REF:-$GITHUB_REF_NAME}"
+          if git clone --quiet --depth 1 --branch "$BR" \
+              "https://x-access-token:${OPERATOR_REPO_TOKEN}@github.com/qalby-tech/livellm-browser-operator.git" "$RUNNER_TEMP/operator"; then
+            echo "OPERATOR_CRD=$RUNNER_TEMP/operator/deploy/crd.yaml" >> "$GITHUB_ENV"
+          else
+            echo "::warning::livellm-browser-operator has no branch $BR; CRD parity skipped"
+          fi
+
+      - name: Render test
+        run: tests/render-test.sh
