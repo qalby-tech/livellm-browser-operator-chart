@@ -43,12 +43,6 @@ spec:
             - name: DEFAULT_CAMOUFOX_PULL_POLICY
               value: {{ $.Values.camoufox.image.pullPolicy | quote }}
             {{- end }}
-            {{- with include "livellm-operator.camoufoxApiImage" . }}
-            - name: DEFAULT_CAMOUFOX_API_IMAGE
-              value: {{ . | quote }}
-            - name: DEFAULT_CAMOUFOX_API_PULL_POLICY
-              value: {{ $.Values.camoufox.image.pullPolicy | quote }}
-            {{- end }}
             {{- if .Values.browser.env }}
             - name: DEFAULT_BROWSER_ENV
               value: {{ .Values.browser.env | toJson | quote }}

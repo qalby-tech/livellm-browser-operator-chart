@@ -2,11 +2,11 @@
 Copied from livellm-browser-operator deploy/crd.yaml; tests/render-test.sh
 with OPERATOR_CRD compares the two.
 
-Rollback hazard: never revert this chart below the CRDs carrying spec.engine
-while any Browser or Controller with engine camoufox exists. Without the
+Rollback hazard: never revert this chart below the Browser CRD carrying
+spec.engine while any Browser with engine camoufox exists. Without the
 property the apiserver prunes spec.engine on every read, so the operator
 renders those browsers as Chrome on a Firefox profile disk. Stop or delete
-the Camoufox browsers and Browser APIs first.
+the Camoufox browsers first.
 */}}
 {{- if .Values.installCRDs }}
 ---

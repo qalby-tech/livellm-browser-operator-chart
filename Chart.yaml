@@ -5,14 +5,19 @@ type: application
 
 version: "0.11.0-dev"
 
-# appVersion controls the browser image tag:
-#   main:    "2.0.1"      → kamasalyamov/livellm-browser:2.0.1
-#   develop: "dev-2.0.1"  → kamasalyamov/livellm-browser:dev-2.0.1
+# appVersion controls the Chrome browser image tag:
+#   main:    "chrome-2.4.0"      → kamasalyamov/livellm-browser:chrome-2.4.0
+#   develop: "dev-chrome-2.4.0"  → kamasalyamov/livellm-browser:dev-chrome-2.4.0
+# appVersion and the annotations below are written only by the livellm-browser CI.
 appVersion: "dev-chrome-2.4.0"
 
 annotations:
-  # controllerVersion controls the controller image tag:
-  #   main:    "controller-2.0.1"      → kamasalyamov/livellm-browser:controller-2.0.1
-  #   develop: "dev-controller-2.0.1"  → kamasalyamov/livellm-browser:dev-controller-2.0.1
+  # controllerVersion controls the controller (Browser API) image tag, one
+  # image for browsers of every engine:
+  #   main:    "controller-2.6.0"      → kamasalyamov/livellm-browser:controller-2.6.0
+  #   develop: "dev-controller-2.6.0"  → kamasalyamov/livellm-browser:dev-controller-2.6.0
+  # camoufoxVersion controls the Camoufox browser image tag:
+  #   main:    "camoufox-1.0.0"      → kamasalyamov/livellm-browser:camoufox-1.0.0
+  #   develop: "dev-camoufox-1.0.0"  → kamasalyamov/livellm-browser:dev-camoufox-1.0.0
   controllerVersion: "dev-controller-2.6.0"
   camoufoxVersion: "dev-camoufox-1.0.0"

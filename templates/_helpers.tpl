@@ -91,13 +91,3 @@ The livellm-browser CI writes the annotation on every Camoufox build.
 {{ $.Values.camoufox.image.repository }}:{{ . }}
 {{- end -}}
 {{- end }}
-
-{{/*
-Camoufox Browser API image — <repo>:<Chart.Annotations.camoufoxApiVersion>,
-or empty when the annotation is absent.
-*/}}
-{{- define "livellm-operator.camoufoxApiImage" -}}
-{{- with index .Chart.Annotations "camoufoxApiVersion" -}}
-{{ $.Values.camoufox.image.repository }}:{{ . }}
-{{- end -}}
-{{- end }}

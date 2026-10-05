@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Render checks for this chart. Needs helm and python3 with PyYAML.
 #
-#   tests/render-test.sh                         lint, Camoufox env, annotations, CRD schema
+#   tests/render-test.sh                         lint, Camoufox env, annotation, CRD schema
 #   OPERATOR_CRD=<operator>/deploy/crd.yaml tests/render-test.sh
 #                                                also: the chart's CRDs equal the operator's
 #
@@ -21,17 +21,21 @@ skip() { printf 'SKIP  %s\n' "$*"; }
 # 1. helm lint
 if helm lint "$CHART" >"$WORK/lint.txt" 2>&1; then ok "helm lint"; else cat "$WORK/lint.txt"; bad "helm lint"; fi
 
-# 2. Annotation shape. The helper uses each annotation verbatim as the image
+# 2. Annotation shape. The helper uses the annotation verbatim as the image
 #    tag, so a bare "1.0.0" would render kamasalyamov/livellm-browser:1.0.0
-#    (the Chrome image) as the Camoufox default; an empty one renders nothing.
+#    as the Camoufox default; an empty one renders nothing. The Browser API has
+#    no Camoufox image (one controller image drives every engine), so a
+#    camoufoxApiVersion annotation is refused.
 python3 - "$CHART/Chart.yaml" >"$WORK/ann.txt" <<'PY' || FAIL=1
 import re, sys, yaml
 ann = (yaml.safe_load(open(sys.argv[1])) or {}).get("annotations") or {}
 rules = {
     "camoufoxVersion":    r"^(dev-)?camoufox-[0-9]+\.[0-9]+\.[0-9]+$",
-    "camoufoxApiVersion": r"^(dev-)?camoufox-api-[0-9]+\.[0-9]+\.[0-9]+$",
 }
 rc = 0
+if "camoufoxApiVersion" in ann:
+    print(f"FAIL  annotation camoufoxApiVersion={ann['camoufoxApiVersion']!r}: there is no Camoufox Browser API image")
+    rc = 1
 for key, rx in rules.items():
     if key not in ann:
         print(f"ok    annotation {key} absent (no Camoufox default rendered)")
@@ -44,10 +48,11 @@ sys.exit(rc)
 PY
 cat "$WORK/ann.txt"
 
-# 3. Camoufox env is additive. Render the Deployment from copies of the chart
-#    with no / one / both camoufox annotations; the render without them must
-#    carry no Camoufox env, and each annotation adds exactly its two env pairs
-#    and nothing else.
+# 3. Camoufox env is additive and browser-only. Render the Deployment from
+#    copies of the chart: without camoufoxVersion it carries no Camoufox env;
+#    camoufoxVersion adds exactly DEFAULT_CAMOUFOX_IMAGE and
+#    DEFAULT_CAMOUFOX_PULL_POLICY; a leftover camoufoxApiVersion annotation
+#    renders nothing (no Browser API env, alone or beside camoufoxVersion).
 variant() { # name, camoufoxVersion or -, camoufoxApiVersion or -
   local dir="$WORK/$1"
   mkdir -p "$dir"
@@ -67,9 +72,9 @@ PY
   helm template t "$dir" --namespace livellm-operator --show-only templates/deployment.yaml >"$WORK/$1.yaml"
 }
 variant none - -
-variant both dev-camoufox-9.8.7 dev-camoufox-api-9.8.7
 variant browser dev-camoufox-9.8.7 -
 variant api - dev-camoufox-api-9.8.7
+variant both dev-camoufox-9.8.7 dev-camoufox-api-9.8.7
 
 if grep -qi camoufox "$WORK/none.yaml"; then bad "Deployment without annotations mentions camoufox"; else ok "Deployment without annotations has no Camoufox env"; fi
 
@@ -86,20 +91,24 @@ expect_added() { # variant, expected-added-lines-file
   if diff -u "$2" "$got" >"$WORK/$1.diff"; then ok "$1: adds exactly $(($(wc -l <"$2") / 2)) env pairs"; else cat "$WORK/$1.diff"; bad "$1: unexpected added lines"; fi
 }
 { pairs DEFAULT_CAMOUFOX_IMAGE "$REPO:dev-camoufox-9.8.7"; pairs DEFAULT_CAMOUFOX_PULL_POLICY "$PP"; } >"$WORK/exp-browser"
-{ pairs DEFAULT_CAMOUFOX_API_IMAGE "$REPO:dev-camoufox-api-9.8.7"; pairs DEFAULT_CAMOUFOX_API_PULL_POLICY "$PP"; } >"$WORK/exp-api"
-cat "$WORK/exp-browser" "$WORK/exp-api" >"$WORK/exp-both"
 expect_added browser "$WORK/exp-browser"
-expect_added api "$WORK/exp-api"
-expect_added both "$WORK/exp-both"
+if cmp -s "$WORK/none.yaml" "$WORK/api.yaml"; then ok "api: camoufoxApiVersion alone renders the same Deployment as no annotations"; else diff -u "$WORK/none.yaml" "$WORK/api.yaml" || true; bad "api: camoufoxApiVersion changed the Deployment"; fi
+if cmp -s "$WORK/browser.yaml" "$WORK/both.yaml"; then ok "both: camoufoxApiVersion beside camoufoxVersion adds nothing"; else diff -u "$WORK/browser.yaml" "$WORK/both.yaml" || true; bad "both: camoufoxApiVersion changed the Deployment"; fi
+for v in none browser api both; do
+  if grep -q 'CAMOUFOX_API\|camoufox-api' "$WORK/$v.yaml"; then bad "$v: Browser API Camoufox env rendered"; fi
+done
 
-# 4. CRD schema: spec.engine on both CRDs, enum exactly [chrome, camoufox],
-#    optional, no default (absent means chrome; the platform stores it only
-#    for camoufox).
+# 4. CRD schema: the Browser CRD has spec.engine, enum exactly
+#    [chrome, camoufox], optional, no default (absent means chrome; the
+#    platform stores it only for camoufox), and the rule that it can't change
+#    after creation. The Controller CRD has no spec.engine: one Browser API
+#    drives browsers of every engine.
 helm template t "$CHART" --namespace livellm-operator --set installCRDs=true \
   --show-only templates/crd-browsers.yaml --show-only templates/crd-controllers.yaml >"$WORK/crds.yaml"
 python3 - "$WORK/crds.yaml" <<'PY' || FAIL=1
 import sys, yaml
 docs = {d["metadata"]["name"]: d for d in yaml.safe_load_all(open(sys.argv[1])) if d}
+RULE = "(has(self.engine) ? self.engine : 'chrome') == (has(oldSelf.engine) ? oldSelf.engine : 'chrome')"
 rc = 0
 for name in ("browsers.livellm.io", "controllers.livellm.io"):
     if name not in docs:
@@ -108,6 +117,12 @@ for name in ("browsers.livellm.io", "controllers.livellm.io"):
         spec = v["schema"]["openAPIV3Schema"]["properties"]["spec"]
         eng = spec.get("properties", {}).get("engine")
         where = f"{name} {v['name']} spec.engine"
+        if name == "controllers.livellm.io":
+            if eng is None:
+                print(f"ok    {where} absent")
+            else:
+                print(f"FAIL  {where} present: a Controller has no engine"); rc = 1
+            continue
         if eng is None:
             print(f"FAIL  {where} missing"); rc = 1; continue
         errs = []
@@ -115,10 +130,12 @@ for name in ("browsers.livellm.io", "controllers.livellm.io"):
         if eng.get("enum") != ["chrome", "camoufox"]: errs.append(f"enum {eng.get('enum')!r}")
         if "default" in eng: errs.append(f"default {eng['default']!r}")
         if "engine" in (spec.get("required") or []): errs.append("required")
+        rules = [r.get("rule") for r in spec.get("x-kubernetes-validations") or []]
+        if RULE not in rules: errs.append(f"no fixed-engine rule (rules {rules!r})")
         if errs:
             print(f"FAIL  {where}: " + ", ".join(errs)); rc = 1
         else:
-            print(f"ok    {where}: optional enum [chrome, camoufox], no default")
+            print(f"ok    {where}: optional enum [chrome, camoufox], no default, fixed after creation")
 sys.exit(rc)
 PY
 

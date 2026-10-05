@@ -68,15 +68,15 @@ controller:
       cpu: "1"
       memory: "4Gi"
 
-# -- Camoufox (Firefox-based) engine images, for Browsers and Controllers
-# with spec.engine camoufox. The browser tag comes from
-# Chart.Annotations.camoufoxVersion, the Browser API tag from
-# Chart.Annotations.camoufoxApiVersion; without an annotation the operator
-# gets no default image for it and offers no Camoufox.
+# -- Camoufox (Firefox-based) browser image, for browser pods of Browsers
+# with spec.engine camoufox only (Controllers run the controller image above,
+# whatever engines their browsers run). The tag comes from
+# Chart.Annotations.camoufoxVersion; without it the operator gets no default
+# Camoufox image and offers no Camoufox.
 camoufox:
   image:
     repository: kamasalyamov/livellm-browser
-    # -- Pull policy for Camoufox browser and Browser API pods.
+    # -- Pull policy for Camoufox browser pods.
     pullPolicy: Always
 
 # -- Namespace configuration
