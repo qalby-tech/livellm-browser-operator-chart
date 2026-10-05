@@ -111,6 +111,14 @@ spec:
                     - name
                     type: object
                 type: object
+              engine:
+                description: |-
+                  Engine is the browser engine: chrome or camoufox. Absent means chrome.
+                  It is set at creation by the platform and does not change afterwards.
+                enum:
+                - chrome
+                - camoufox
+                type: string
               env:
                 description: Env is a list of environment variables injected into
                   the browser container.
@@ -234,13 +242,15 @@ spec:
                 description: |-
                   Extensions is a list of Chrome Web Store extension IDs to install at creation time.
                   The launcher downloads and injects them into the profile before Chrome starts.
+                  A camoufox browser takes no extensions: the field is ignored there.
                 items:
                   type: string
                 type: array
               image:
                 description: |-
                   Image overrides the browser container image.
-                  If empty, the operator uses its configured default (DEFAULT_BROWSER_IMAGE env var).
+                  If empty, the operator uses its configured default (DEFAULT_BROWSER_IMAGE,
+                  or DEFAULT_CAMOUFOX_IMAGE for a camoufox browser).
                 type: string
               nodeSelector:
                 additionalProperties:
@@ -343,8 +353,10 @@ spec:
                 type: string
               wsUrl:
                 description: |-
-                  WsURL is the full CDP WebSocket URL:
-                  ws://<name>.<namespace>.svc.cluster.local:9222/devtools/browser/<id>
+                  WsURL is the browser's automation WebSocket URL: for chrome the CDP URL
+                  ws://<name>.<namespace>.svc.cluster.local:9222/devtools/browser/<id>, for
+                  camoufox the Playwright URL
+                  ws://<name>.<namespace>.svc.cluster.local:9222/playwright/default
                 type: string
             type: object
         type: object

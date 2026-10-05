@@ -252,10 +252,21 @@ spec:
               browsers:
                 description: |-
                   Browsers is an explicit list of in-namespace Browser CR names to register
-                  with this controller (in addition to any autodiscovered ones).
+                  with this controller (in addition to any autodiscovered ones). A named
+                  Browser of another engine is left out (status.message says so).
                 items:
                   type: string
                 type: array
+              engine:
+                description: |-
+                  Engine is the engine of the browsers this controller drives: chrome or
+                  camoufox. Absent means chrome. It registers only Browsers of its engine
+                  and takes remote browsers only when chrome. It is set at creation by the
+                  platform and does not change afterwards.
+                enum:
+                - chrome
+                - camoufox
+                type: string
               env:
                 description: Env is a list of environment variables injected into
                   the controller container.
@@ -378,7 +389,8 @@ spec:
               externalBrowsers:
                 description: |-
                   ExternalBrowsers are remote/BYO browsers reachable at a user-supplied CDP
-                  websocket endpoint, registered alongside in-cluster Browsers.
+                  websocket endpoint, registered alongside in-cluster Browsers. A camoufox
+                  controller ignores them.
                 items:
                   description: ExternalBrowser is a remote/BYO browser registered
                     by ws endpoint.
@@ -438,7 +450,8 @@ spec:
               image:
                 description: |-
                   Image overrides the controller container image.
-                  If empty, the operator uses its configured default (DEFAULT_CONTROLLER_IMAGE env var).
+                  If empty, the operator uses its configured default (DEFAULT_CONTROLLER_IMAGE,
+                  or DEFAULT_CAMOUFOX_API_IMAGE for a camoufox controller).
                 type: string
               maxPagesPerBrowser:
                 description: |-
