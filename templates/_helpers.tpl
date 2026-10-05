@@ -60,7 +60,7 @@ Operator image tag — defaults to Chart.Version (chart release), not AppVersion
 
 {{/*
 Browser image — full <repo>:<tag> string.
-Tag comes from Chart.AppVersion (e.g. "2.0.1" or "dev-2.0.1").
+Tag comes from Chart.AppVersion (e.g. "chrome-2.4.0" or "dev-chrome-2.4.0").
 */}}
 {{- define "livellm-operator.browserImage" -}}
 {{ .Values.browser.image.repository }}:{{ .Chart.AppVersion }}

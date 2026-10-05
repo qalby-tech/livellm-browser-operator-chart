@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # Render checks for this chart. Needs helm and python3 with PyYAML.
 #
-#   tests/render-test.sh                         lint, Camoufox env, annotation, CRD schema
+#   tests/render-test.sh                         lint, image tags, Camoufox env, CRD schema
 #   OPERATOR_CRD=<operator>/deploy/crd.yaml tests/render-test.sh
 #                                                also: the chart's CRDs equal the operator's
+#   CHART_BASE=origin/develop tests/render-test.sh
+#                                                also: Chart.yaml's values (every line that is
+#                                                not a comment) equal that ref's, as after a
+#                                                rebase that must keep develop's CI-written values
 #
 # The CRDs here are copied from livellm-browser-operator's deploy/crd.yaml;
 # nothing syncs them, so run with OPERATOR_CRD before pushing a CRD change.
@@ -21,18 +25,45 @@ skip() { printf 'SKIP  %s\n' "$*"; }
 # 1. helm lint
 if helm lint "$CHART" >"$WORK/lint.txt" 2>&1; then ok "helm lint"; else cat "$WORK/lint.txt"; bad "helm lint"; fi
 
-# 2. Annotation shape. The helper uses the annotation verbatim as the image
-#    tag, so a bare "1.0.0" would render kamasalyamov/livellm-browser:1.0.0
-#    as the Camoufox default; an empty one renders nothing. The Browser API has
-#    no Camoufox image (one controller image drives every engine), so a
-#    camoufoxApiVersion annotation is refused.
+# 2. Image tag shape. The helpers use appVersion and the annotations verbatim
+#    as image tags (kamasalyamov/livellm-browser:<tag>), so each must be the
+#    name the livellm-browser CI pushes: appVersion (dev-)chrome-X.Y.Z,
+#    controllerVersion (dev-)controller-X.Y.Z, camoufoxVersion (optional,
+#    absent until the first Camoufox build) (dev-)camoufox-X.Y.Z. Chrome images
+#    up to 2.3.0 were pushed as (dev-)X.Y.Z; that old name is accepted only for
+#    those versions, so an updater still writing it for a new build fails here.
+#    All present tags agree on the dev- prefix (develop and main never mix).
+#    The Browser API has no Camoufox image (one controller image drives every
+#    engine), so a camoufoxApiVersion annotation is refused.
 python3 - "$CHART/Chart.yaml" >"$WORK/ann.txt" <<'PY' || FAIL=1
 import re, sys, yaml
-ann = (yaml.safe_load(open(sys.argv[1])) or {}).get("annotations") or {}
-rules = {
-    "camoufoxVersion":    r"^(dev-)?camoufox-[0-9]+\.[0-9]+\.[0-9]+$",
-}
+chart = yaml.safe_load(open(sys.argv[1])) or {}
+ann = chart.get("annotations") or {}
+V = r"([0-9]+)\.([0-9]+)\.([0-9]+)"
+LAST_OLD_CHROME = (2, 3, 0)  # last Chrome image pushed without "chrome-"
 rc = 0
+tags = {}
+app = chart.get("appVersion")
+if isinstance(app, str) and re.match(rf"^(dev-)?chrome-{V}$", app):
+    print(f"ok    appVersion={app}")
+    tags["appVersion"] = app
+elif isinstance(app, str) and (m := re.match(rf"^(dev-)?{V}$", app)) \
+        and tuple(map(int, m.groups()[1:])) <= LAST_OLD_CHROME:
+    print(f"ok    appVersion={app} (old Chrome image name, versions up to {'.'.join(map(str, LAST_OLD_CHROME))} only)")
+    tags["appVersion"] = app
+else:
+    print(f"FAIL  appVersion={app!r} is not (dev-)chrome-X.Y.Z")
+    rc = 1
+ctl = ann.get("controllerVersion")
+if isinstance(ctl, str) and re.match(rf"^(dev-)?controller-{V}$", ctl):
+    print(f"ok    annotation controllerVersion={ctl}")
+    tags["controllerVersion"] = ctl
+else:
+    print(f"FAIL  annotation controllerVersion={ctl!r} is not (dev-)controller-X.Y.Z")
+    rc = 1
+rules = {
+    "camoufoxVersion":    rf"^(dev-)?camoufox-{V}$",
+}
 if "camoufoxApiVersion" in ann:
     print(f"FAIL  annotation camoufoxApiVersion={ann['camoufoxApiVersion']!r}: there is no Camoufox Browser API image")
     rc = 1
@@ -41,9 +72,16 @@ for key, rx in rules.items():
         print(f"ok    annotation {key} absent (no Camoufox default rendered)")
     elif isinstance(ann[key], str) and re.match(rx, ann[key]):
         print(f"ok    annotation {key}={ann[key]}")
+        tags[key] = ann[key]
     else:
         print(f"FAIL  annotation {key}={ann[key]!r} does not match {rx}")
         rc = 1
+dev = {k: v.startswith("dev-") for k, v in tags.items()}
+if len(set(dev.values())) > 1:
+    print(f"FAIL  image tags mix dev- and release names: {tags!r}")
+    rc = 1
+elif tags:
+    print(f"ok    image tags all {'dev-' if any(dev.values()) else 'release'} names")
 sys.exit(rc)
 PY
 cat "$WORK/ann.txt"
@@ -162,6 +200,22 @@ sys.exit(rc)
 PY
 else
   skip "CRD parity with the operator: set OPERATOR_CRD=<livellm-browser-operator>/deploy/crd.yaml"
+fi
+
+# 6. Chart.yaml values equal a base ref's (opt-in). version, appVersion and
+#    the annotations are written by CI on develop (the operator release and
+#    the livellm-browser builds); a branch changes Chart.yaml comments only.
+if [ -n "${CHART_BASE:-}" ]; then
+  values() { grep -vE '^[[:space:]]*(#|$)'; }
+  if base="$(git -C "$CHART" show "$CHART_BASE:Chart.yaml")"; then
+    if diff <(printf '%s\n' "$base" | values) <(values <"$CHART/Chart.yaml") >"$WORK/base.diff"; then
+      ok "Chart.yaml values equal $CHART_BASE's"
+    else
+      cat "$WORK/base.diff"; bad "Chart.yaml values differ from $CHART_BASE's"
+    fi
+  else
+    bad "CHART_BASE=$CHART_BASE: no Chart.yaml there"
+  fi
 fi
 
 if [ "$FAIL" -ne 0 ]; then echo "render-test: FAILED"; exit 1; fi
