@@ -20,4 +20,4 @@ annotations:
   #   main:    "camoufox-1.0.0"      → kamasalyamov/livellm-browser:camoufox-1.0.0
   #   develop: "dev-camoufox-1.0.0"  → kamasalyamov/livellm-browser:dev-camoufox-1.0.0
   controllerVersion: "dev-controller-2.6.0"
-  camoufoxVersion: "dev-camoufox-1.0.0"
+  camoufoxVersion: "dev-camoufox-1.0.1"
