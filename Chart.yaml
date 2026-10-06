@@ -8,10 +8,11 @@ version: "0.11.0-dev"
 # appVersion controls the browser image tag:
 #   main:    "2.0.1"      → kamasalyamov/livellm-browser:2.0.1
 #   develop: "dev-2.0.1"  → kamasalyamov/livellm-browser:dev-2.0.1
-appVersion: "dev-2.3.0"
+appVersion: "dev-chrome-2.4.0"
 
 annotations:
   # controllerVersion controls the controller image tag:
   #   main:    "controller-2.0.1"      → kamasalyamov/livellm-browser:controller-2.0.1
   #   develop: "dev-controller-2.0.1"  → kamasalyamov/livellm-browser:dev-controller-2.0.1
-  controllerVersion: "dev-controller-2.5.0"
+  controllerVersion: "dev-controller-2.6.0"
+  camoufoxVersion: "dev-camoufox-1.0.0"
